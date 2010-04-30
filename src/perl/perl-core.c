@@ -368,7 +368,11 @@ char *perl_script_get_path(const char *name)
 		path = g_strdup_printf(SCRIPTDIR"/%s", file);
 		if (stat(path, &statbuf) != 0) {
 			g_free(path);
-			path = NULL;
+			path = g_strdup_printf("Contents/Resources/Scripts/%s", file);
+			if (stat(path, &statbuf) != 0) {
+				g_free(path);
+				path = NULL;
+			}
 		}
 	}
 	g_free(file);
