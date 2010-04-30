@@ -145,7 +145,7 @@ static void sserver_connect(SERVER_SETUP_REC *rec, SERVER_CONNECT_REC *conn)
 	server_connect_unref(conn);
 }
 
-static SERVER_CONNECT_REC *
+SERVER_CONNECT_REC *
 server_connect_copy_skeleton(SERVER_CONNECT_REC *src, int connect_info)
 {
 	SERVER_CONNECT_REC *dest;

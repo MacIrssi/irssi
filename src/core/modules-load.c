@@ -128,7 +128,8 @@ static GModule *module_open(const char *name, int *found)
 
 		/* module not found from home dir, try global module dir */
 		g_free(path);
-		path = g_module_build_path(MODULEDIR, name);
+		// MacIrssi, /usr/local/lib/foo isn't good on OSX
+		path = g_module_build_path("Contents/Resources", name);
 	}
 
 	*found = stat(path, &statbuf) == 0;

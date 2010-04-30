@@ -258,7 +258,7 @@ static void cmd_help(const char *data)
 
 void fe_help_init(void)
 {
-        settings_add_str("misc", "help_path", HELPDIR);
+	settings_add_str("misc", "help_path", "Contents/Resources/helpfiles");
 	command_bind("help", NULL, (SIGNAL_FUNC) cmd_help);
 }
 
