@@ -26,6 +26,7 @@
 #include "settings.h"
 #include "commands.h"
 #include "misc.h"
+#include <dlfcn.h>
 
 #ifdef HAVE_GMODULE
 
@@ -126,10 +127,28 @@ static GModule *module_open(const char *name, int *found)
 			return module;
 		}
 
-		/* module not found from home dir, try global module dir */
-		g_free(path);
-		// MacIrssi, /usr/local/lib/foo isn't good on OSX
+		/* MacIrssi foo */
+		
+		// We'll have a go at building a path but we might get overriden below
 		path = g_module_build_path("Contents/Resources", name);
+		
+		// Do a dyld for the symbol we use to do a module lookup, if we find it
+		// and it returns non-NULL for the path then return the module path from
+		// that. Also, we own a free() if we get non-NULL
+		char* (*mi_find_module)(char *path);
+		mi_find_module = dlsym(RTLD_DEFAULT, "macirssi_find_module");
+		
+		if (mi_find_module)
+		{
+			char *module = mi_find_module(name);
+			if (module)
+			{
+				g_free(path);
+				path = g_strdup(module);
+				free(module);
+			}
+		}
+		/* MacIrssi */
 	}
 
 	*found = stat(path, &statbuf) == 0;
