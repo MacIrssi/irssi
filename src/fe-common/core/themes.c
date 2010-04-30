@@ -41,6 +41,9 @@ static int init_finished;
 static char *init_errors;
 static THEME_REC *internal_theme;
 
+int num_theme_dirs;
+char **theme_dirs;
+
 static int theme_read(THEME_REC *theme, const char *path);
 
 THEME_REC *theme_create(const char *path, const char *name)
@@ -911,8 +914,23 @@ THEME_REC *theme_load(const char *setname)
 		if (stat(fname, &statbuf) != 0) {
 			/* theme not found */
 			g_free(fname);
-			g_free(name);
-			return theme; /* use the one in memory if possible */
+
+			/* MacIrssi - check additional dirs */
+			int i, theme_found = 0;
+			for(i = 0; i < num_theme_dirs; i++) {
+				fname = g_strdup_printf("%s/%s.theme", theme_dirs[i], name);
+				if (stat(fname, &statbuf) == 0) {
+					theme_found = 1;
+					break;
+				}
+				g_free(fname);
+			}
+
+			if (!theme_found)
+			{
+				g_free(name);
+				return theme; /* use the one in memory if possible */
+			}
 		}
 	}
 

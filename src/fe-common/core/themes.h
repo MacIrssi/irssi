@@ -1,6 +1,9 @@
 #ifndef __THEMES_H
 #define __THEMES_H
 
+extern int num_theme_dirs;
+extern char **theme_dirs;
+
 typedef struct {
 	char *name;
 
