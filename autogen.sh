@@ -42,7 +42,7 @@ elif type elinks >/dev/null 2>&1 ; then
   elinks -dump docs/faq.html|perl -pe 's/^ *//; if ($_ eq "\n" && $state eq "Q") { $_ = ""; } elsif (/^([QA]):/) { $state = $1 } elsif ($_ ne "\n") { $_ = "   $_"; };' > docs/faq.txt
 else
   echo "**Error**: No lynx or links present"
-  exit 1
+  #exit 1
 fi
 
 if test x$NOCONFIGURE = x && test -z "$*"; then
