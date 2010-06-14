@@ -188,15 +188,15 @@ static void server_setup_fill_chatnet(SERVER_CONNECT_REC *conn,
 	g_return_if_fail(IS_SERVER_CONNECT(conn));
 	g_return_if_fail(IS_CHATNET(chatnet));
 
-	if (chatnet->nick != NULL) {
+	if (chatnet->nick != NULL && chatnet->nick[0] != '\0') {
 		g_free(conn->nick);
 		conn->nick = g_strdup(chatnet->nick);;
 	}
-	if (chatnet->username != NULL) {
+	if (chatnet->username != NULL && chatnet->username[0] != '\0') {
                 g_free(conn->username);
 		conn->username = g_strdup(chatnet->username);;
 	}
-	if (chatnet->realname != NULL) {
+	if (chatnet->realname != NULL && chatnet->realname[0] != '\0') {
                 g_free(conn->realname);
 		conn->realname = g_strdup(chatnet->realname);;
 	}
