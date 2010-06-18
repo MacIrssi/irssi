@@ -1,9 +1,6 @@
 #ifndef __THEMES_H
 #define __THEMES_H
 
-extern int num_theme_dirs;
-extern char **theme_dirs;
-
 typedef struct {
 	char *name;
 
@@ -44,6 +41,7 @@ extern GHashTable *default_formats;
 THEME_REC *theme_create(const char *path, const char *name);
 void theme_destroy(THEME_REC *rec);
 
+void theme_macirssi_set_callback(char*(*callback)(const char* name, void* context), void* context);
 THEME_REC *theme_load(const char *name);
 
 #define theme_register(formats) theme_register_module(MODULE_NAME, formats)

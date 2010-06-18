@@ -41,8 +41,10 @@ static int init_finished;
 static char *init_errors;
 static THEME_REC *internal_theme;
 
-int num_theme_dirs;
-char **theme_dirs;
+struct {
+  char* (*find_theme)(const char *name, void* context);
+  void *context;
+} macirssi_themes;
 
 static int theme_read(THEME_REC *theme, const char *path);
 
@@ -890,6 +892,12 @@ static void window_themes_update(void)
 	}
 }
 
+void theme_macirssi_set_callback(char*(*callback)(const char* name, void* context), void* context)
+{
+  macirssi_themes.find_theme = callback;
+  macirssi_themes.context = context;
+}
+
 THEME_REC *theme_load(const char *setname)
 {
 	THEME_REC *theme, *oldtheme;
@@ -916,21 +924,19 @@ THEME_REC *theme_load(const char *setname)
 			g_free(fname);
 
 			/* MacIrssi - check additional dirs */
-			int i, theme_found = 0;
-			for(i = 0; i < num_theme_dirs; i++) {
-				fname = g_strdup_printf("%s/%s.theme", theme_dirs[i], name);
-				if (stat(fname, &statbuf) == 0) {
-					theme_found = 1;
-					break;
-				}
-				g_free(fname);
-			}
-
-			if (!theme_found)
-			{
+      if (!macirssi_themes.find_theme) {
+        g_free(name);
+        return theme;
+      }
+      
+      fname = macirssi_themes.find_theme(name, macirssi_themes.context);
+      if (fname && (stat(fname, &statbuf) != 0)) {
+        if (fname) {
+          free(fname);
+        }
 				g_free(name);
 				return theme; /* use the one in memory if possible */
-			}
+      }
 		}
 	}
 
