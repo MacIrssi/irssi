@@ -463,11 +463,12 @@ if test "$want_perl" != "no"; then
 		    ;;
 		esac
 
+		MACIRSSI_CFLAGS=`echo $CFLAGS | sed -e 's/-arch ppc//'`
+		MACIRSSI_LDFLAGS=`echo $LDFLAGS | sed -e 's/-arch ppc//'`
+
 		dnl * check that perl's ldflags actually work
-		echo "#include <EXTERN.h>" > conftest.c
-		echo "#include <perl.h>" >> conftest.c
-		echo "int main(){perl_alloc(); return 0;}" >> conftest.c
-		$CC $CFLAGS $PERL_CFLAGS conftest.c -o conftest $LDFLAGS $PERL_LDFLAGS 2> perl.error.tmp > /dev/null
+		echo "main(){perl_alloc(); return 0;}" > conftest.c
+		$CC $MACIRSSI_CFLAGS conftest.c -o conftest $MACIRSSI_LDFLAGS $PERL_LDFLAGS 2> perl.error.tmp > /dev/null
 		if test ! -s conftest -a "x$ignore_perl_errors" = "x"; then
 			perl_check_error="Error linking with perl libraries: $PERL_LDFLAGS: `cat perl.error.tmp`"
 			AC_MSG_RESULT([error linking with perl libraries, building without Perl])
