@@ -930,6 +930,11 @@ THEME_REC *theme_load(const char *setname)
       }
       
       fname = macirssi_themes.find_theme(name, macirssi_themes.context);
+      if (!fname) {
+        g_free(name);
+        return theme;
+      }
+      
       if (fname && (stat(fname, &statbuf) != 0)) {
         if (fname) {
           free(fname);
