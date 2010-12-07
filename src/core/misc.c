@@ -431,7 +431,7 @@ char *convert_home(const char *path)
 	const char *home;
 
 	if (*path == '~' && (*(path+1) == '/' || *(path+1) == '\0')) {
-		home = g_get_home_dir();
+		home = getenv("HOME");
 		if (home == NULL)
 			home = ".";
 
