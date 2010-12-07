@@ -183,7 +183,7 @@ void core_preinit(const char *path)
 	int len;
 
 	if (irssi_dir == NULL) {
-		home = g_get_home_dir();
+		home = getenv("HOME");
 		if (home == NULL)
 			home = ".";
 
