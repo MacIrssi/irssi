@@ -140,7 +140,7 @@ static GModule *module_open(const char *name, int *found)
 		
 		if (mi_find_module)
 		{
-			char *module = mi_find_module(name);
+			char *module = mi_find_module((char*)name);
 			if (module)
 			{
 				g_free(path);
