@@ -346,7 +346,7 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
 	}
 
 	PUTBACK;
-	FREETMPS;
+	//FREETMPS;
 	LEAVE;
 }
 
