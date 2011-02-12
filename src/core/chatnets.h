@@ -19,6 +19,7 @@ extern GSList *chatnets; /* list of available chat networks */
 /* add the chatnet to chat networks list */
 void chatnet_create(CHATNET_REC *chatnet);
 /* remove the chatnet from chat networks list */
+void chatnet_config_remove(CHATNET_REC *chatnet);
 void chatnet_remove(CHATNET_REC *chatnet);
 /* destroy the chatnet structure. doesn't remove from config file */
 void chatnet_destroy(CHATNET_REC *chatnet);
