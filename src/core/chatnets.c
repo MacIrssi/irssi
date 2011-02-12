@@ -49,7 +49,7 @@ static void chatnet_config_save(CHATNET_REC *chatnet)
         signal_emit("chatnet saved", 2, chatnet, node);
 }
 
-static void chatnet_config_remove(CHATNET_REC *chatnet)
+void chatnet_config_remove(CHATNET_REC *chatnet)
 {
 	CONFIG_NODE *node;
 
