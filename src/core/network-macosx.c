@@ -369,6 +369,8 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
     }
   }
   
+  /* TODO: CA file and paths, currently ignored during verification */
+  
   channel = g_new0(GIOSSLChannel, 1);
   channel->fd = fd;
   channel->giochan = handle;
