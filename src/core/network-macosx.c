@@ -38,6 +38,61 @@ typedef struct
 	const char *hostname;
 } GIOSSLChannel;
 
+SecIdentityRef CreateIdentityFromCommonName(const char *certificate, const char *privateKey)
+{
+  /* due to keychain constraints, only keychain identities are usable */
+  SecIdentitySearchRef identitySearchRef = nil;
+  
+  OSStatus status = SecIdentitySearchCreate(NULL, 0, &identitySearchRef);
+  if (status != noErr) {
+    g_warning("Unable to create search for keychain identity matching \"%s\"", certificate);
+    return NULL;
+  }
+  
+  CFStringRef certificateCommonNameRef = CFStringCreateWithCString(kCFAllocatorDefault, certificate, kCFStringEncodingUTF8);
+  SecIdentityRef discoveredIdentityRef = nil;
+  
+  SecIdentityRef identityRef = nil;
+  while ((status = SecIdentitySearchCopyNext(identitySearchRef, &identityRef)) == noErr) {
+    /* get the certificate for each and see if it matches certificate */
+    SecCertificateRef certificateRef;
+    
+    OSStatus substatus = SecIdentityCopyCertificate(identityRef, &certificateRef);
+    if (substatus != noErr) {
+      continue;
+    }
+    
+    CFStringRef commonNameRef;
+    substatus = SecCertificateCopyCommonName(certificateRef, &commonNameRef);
+    if (substatus != noErr) {
+      CFRelease(certificateRef);
+      continue;
+    }
+    
+    if (CFStringCompare(commonNameRef, certificateCommonNameRef, 0) == kCFCompareEqualTo) {
+      discoveredIdentityRef = identityRef;
+      CFRelease(commonNameRef);
+      CFRelease(certificateRef);
+      /* itentionally not releasing identity here */
+      break;
+    }
+    CFRelease(commonNameRef);
+    CFRelease(certificateRef);
+    CFRelease(identityRef);
+  }
+  
+  CFRelease(certificateCommonNameRef);
+  CFRelease(identitySearchRef);
+  
+  if (!discoveredIdentityRef) {
+    g_warning("Unable to find keychain identity with common name \"%s\".", certificate);
+    return NULL;
+  }
+  
+  /* return found identity with create rule */
+  return identityRef;
+}
+
 OSStatus _SSLReadFunction(SSLConnectionRef connection, void *data, size_t *dataLength)
 {
   GIOSSLChannel *channel = (GIOSSLChannel*)connection;
@@ -283,7 +338,36 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
   SSLSetEnableCertVerify(contextRef, verify);
   SSLSetAllowsAnyRoot(contextRef, TRUE);
   
-  /* TODO: certificate stuff */
+  /* if we've got mycert, or more, then we need to try and load them into an identity */
+  if (mycert) {
+    SecIdentityRef identity = CreateIdentityFromCommonName(mycert, mypkey);
+    
+    /* you've asked for a cert, its not valid, that's an error */
+    if (!identity) {
+      g_warning("Failed to create an identity out of supplied certificates.");
+      SSLDisposeContext(contextRef);
+      return NULL;
+    }
+    
+    /* set this identity as the client certificate of the connection */
+    CFTypeRef values[] = {
+      identity
+    };
+    
+    CFArrayRef certificates = CFArrayCreate(kCFAllocatorDefault, values, 1, &kCFTypeArrayCallBacks);
+    status = SSLSetCertificate(contextRef, certificates);
+    if (status == noErr) {
+      status = SSLSetEncryptionCertificate(contextRef, certificates);
+    }
+    
+    CFRelease(certificates);
+    CFRelease(identity);
+    
+    if (status != noErr) {
+      g_warning("Failed to set certificate for SSL connection. %d", status);
+      return NULL;
+    }
+  }
   
   channel = g_new0(GIOSSLChannel, 1);
   channel->fd = fd;
