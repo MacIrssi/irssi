@@ -154,14 +154,6 @@ static void cmd_server_add(const char *data)
 	if (value != NULL && *value != '\0')
 		rec->ssl_cert = g_strdup(value);
 
-	value = g_hash_table_lookup(optlist, "ssl_pkey");
-	if (value != NULL && *value != '\0')
-		rec->ssl_pkey = g_strdup(value);
-
-	value = g_hash_table_lookup(optlist, "ssl_pass");
-	if (value != NULL && *value != '\0')
-		rec->ssl_pass = g_strdup(value);
-
 	if (g_hash_table_lookup(optlist, "ssl_verify"))
 		rec->ssl_verify = TRUE;
 
