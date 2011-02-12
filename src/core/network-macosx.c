@@ -182,10 +182,6 @@ static GIOFuncs irssi_ssl_channel_funcs = {
   irssi_ssl_get_flags
 };
 
-static gboolean irssi_ssl_init(void)
-{
-}
-
 int irssi_ssl_handshake(GIOChannel *handle)
 {
   GIOSSLChannel *channel = (GIOSSLChannel*)handle;
@@ -208,14 +204,43 @@ int irssi_ssl_handshake(GIOChannel *handle)
   }
   
   /* again, we can be non-block and we've been asked to handshake, loop ... */
-  while ((status = SSLHandshake(channel->context)) != noErr) {
-    if (status != errSSLWouldBlock) {
-      g_warning("SSL handshake failed: SSLHandshake returned %d.", status);
-      return -1;
+  status = SSLHandshake(channel->context);
+  if (status != noErr) {
+    if (status == errSSLWouldBlock) {
+      /* openssl can tell if we want read or write, I can't */
+      return 1;
     }
+    g_warning("SSLHandshake failed with error %d.", status);
+    return -1;
   }
   
-  /* TODO: verify client certificate */
+  SecTrustRef secTrustRef;
+  status = SSLCopyPeerTrust(channel->context, &secTrustRef);
+  if (status != noErr) {
+    g_warning("SSLCopyPeerTrust failed, unable to verify client cerfiticates. %d", status);
+    return -1;
+  }
+  
+  SecTrustResultType trustResult;
+  status = SecTrustEvaluate(secTrustRef, &trustResult);
+  if (status != noErr) {
+    g_warning("SecTrustEvaluate failed, unable to verify client certificates. %d", status);
+    CFRelease(secTrustRef);
+    return -1;
+  }
+  
+  CFRelease(secTrustRef);
+  
+  switch (trustResult) {
+    case kSecTrustResultProceed:
+    case kSecTrustResultUnspecified:
+      /* Happy with this certificate, carry on Sir ... */
+      break;
+    default:
+      /* Not so happy with this one */
+      return -1;
+  }
+  
   return 0;
 }
 
@@ -243,9 +268,11 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
     return NULL;
   }
   
-  if (!verify) {
-    SSLSetAllowsAnyRoot(contextRef, TRUE);
-  }
+  /* network-openssl.c explicitly disables kSSLProtocol2 */
+  SSLSetProtocolVersionEnabled(contextRef, kSSLProtocol2, FALSE);
+  
+  SSLSetEnableCertVerify(contextRef, verify);
+  SSLSetAllowsAnyRoot(contextRef, !verify);
   
   /* TODO: certificate stuff */
   
