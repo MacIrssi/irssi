@@ -24,6 +24,9 @@
 #include "network.h"
 #include "misc.h"
 
+/* declare our escape into MacIrssi land */
+int irssibridge_present_trust_panel(SecTrustRef trust);
+
 /* ssl i/o channel object */
 typedef struct
 {
@@ -228,18 +231,24 @@ int irssi_ssl_handshake(GIOChannel *handle)
     CFRelease(secTrustRef);
     return -1;
   }
-  
-  CFRelease(secTrustRef);
-  
+    
   switch (trustResult) {
     case kSecTrustResultProceed:
     case kSecTrustResultUnspecified:
       /* Happy with this certificate, carry on Sir ... */
       break;
     default:
+    {
       /* Not so happy with this one */
-      return -1;
+      int code = irssibridge_present_trust_panel(secTrustRef);
+      if (code != 1 /* NSOKButton */) {
+        CFRelease(secTrustRef);
+        return -1;
+      }
+    }
   }
+  
+  CFRelease(secTrustRef);
   
   return 0;
 }
@@ -272,7 +281,7 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
   SSLSetProtocolVersionEnabled(contextRef, kSSLProtocol2, FALSE);
   
   SSLSetEnableCertVerify(contextRef, verify);
-  SSLSetAllowsAnyRoot(contextRef, !verify);
+  SSLSetAllowsAnyRoot(contextRef, TRUE);
   
   /* TODO: certificate stuff */
   
