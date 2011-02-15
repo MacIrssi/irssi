@@ -27,6 +27,12 @@
 /* declare our escape into MacIrssi land */
 int irssibridge_present_trust_panel(SecTrustRef trust);
 
+typedef enum
+{
+  GIOSSLReadAgain,
+  GIOSSLWriteAgain,
+} GIOSSLAgainType;
+
 /* ssl i/o channel object */
 typedef struct
 {
@@ -35,6 +41,7 @@ typedef struct
 	GIOChannel *giochan;
   SSLContextRef context;
 	unsigned int verify:1;
+  GIOSSLAgainType again;
 	const char *hostname;
 } GIOSSLChannel;
 
@@ -104,6 +111,7 @@ OSStatus _SSLReadFunction(SSLConnectionRef connection, void *data, size_t *dataL
     if (res == -1) {
       if (errno == EAGAIN) {
         /* eject if we get EAGAIN, means we're in non-block mode */
+        channel->again = GIOSSLReadAgain;
         *dataLength = len;
         return errSSLWouldBlock;
       }
@@ -127,6 +135,7 @@ OSStatus _SSLWriteFunction(SSLConnectionRef connection, void *data, size_t *data
     
     if (res == -1) {
       if (errno == EAGAIN) {
+        channel->again = GIOSSLWriteAgain;
         *dataLength = len;
         return errSSLWouldBlock;
       }
@@ -257,7 +266,6 @@ int irssi_ssl_handshake(GIOChannel *handle)
   while ((ret = select(channel->fd+1, NULL, &write_set, NULL, &timeout)) < 1)
   {
     if (ret == 0 || errno == EAGAIN) {
-      g_warning("select() returned EAGAIN");
       return 3;
     }
     g_warning("select() waiting for socket connect returned %d.", errno);
@@ -269,7 +277,7 @@ int irssi_ssl_handshake(GIOChannel *handle)
   if (status != noErr) {
     if (status == errSSLWouldBlock) {
       /* openssl can tell if we want read or write, I can't */
-      return 1;
+      return (channel->again == GIOSSLReadAgain ? 1 : 3);
     }
     g_warning("SSLHandshake failed with error %d.", status);
     return -1;
@@ -321,6 +329,10 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
   if (!(fd = g_io_channel_unix_get_fd(handle))) {
     return NULL;
   }
+  
+  /* On MacOS we can stop sockets ever firing SIGPIPE */
+  int flag = 1;
+  setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &flag, sizeof(flag));
   
   OSStatus status = SSLNewContext(FALSE, &contextRef);
   if (status != noErr) {
