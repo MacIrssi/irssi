@@ -252,10 +252,13 @@ int irssi_ssl_handshake(GIOChannel *handle)
   FD_ZERO(&write_set);
   FD_SET(channel->fd, &write_set);
   
-  while ((ret = select(channel->fd+1, NULL, &write_set, NULL, NULL)) < 1)
+  struct timeval timeout = { 0, 0 };
+  
+  while ((ret = select(channel->fd+1, NULL, &write_set, NULL, &timeout)) < 1)
   {
     if (ret == 0 || errno == EAGAIN) {
-      continue;
+      g_warning("select() returned EAGAIN");
+      return 3;
     }
     g_warning("select() waiting for socket connect returned %d.", errno);
     return -1;
