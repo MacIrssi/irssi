@@ -36,13 +36,13 @@ typedef enum
 /* ssl i/o channel object */
 typedef struct
 {
-	GIOChannel pad;
-	gint fd;
-	GIOChannel *giochan;
+  GIOChannel pad;
+  gint fd;
+  GIOChannel *giochan;
   SSLContextRef context;
-	unsigned int verify:1;
+  unsigned int verify:1;
   GIOSSLAgainType again;
-	const char *hostname;
+  const char *hostname;
 } GIOSSLChannel;
 
 SecIdentityRef CreateIdentityFromCommonName(const char *certificate, const char *privateKey)
