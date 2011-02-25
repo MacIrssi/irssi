@@ -25,6 +25,10 @@
 #include "pidwait.h"
 #include "net-nonblock.h"
 
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
+
 typedef struct {
 	NET_CALLBACK func;
 	void *data;
@@ -70,21 +74,34 @@ static int g_io_channel_read_block(GIOChannel *channel, void *data, int len)
 	return received < len ? -1 : 0;
 }
 
+#ifdef __APPLE__
+struct _net_nonblock_params {
+  const char *addr;
+  GIOChannel *pipe;
+  int reverse_lookup;
+};
+
 /* nonblocking gethostbyname(), ip (IPADDR) + error (int, 0 = not error) is
-   written to pipe when found PID of the resolver child is returned */
+ written to pipe when found PID of the resolver child is returned */
+int __net_gethostbyname_nonblock(const char *addr, GIOChannel *pipe,
+                                 int reverse_lookup)
+#else
+/* nonblocking gethostbyname(), ip (IPADDR) + error (int, 0 = not error) is
+ written to pipe when found PID of the resolver child is returned */
 int net_gethostbyname_nonblock(const char *addr, GIOChannel *pipe,
-			       int reverse_lookup)
+                               int reverse_lookup)
+#endif
 {
 	RESOLVED_IP_REC rec;
 	const char *errorstr;
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__APPLE__)
 	int pid;
 #endif
 	int len;
 
 	g_return_val_if_fail(addr != NULL, FALSE);
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__APPLE__)
 	pid = fork();
 	if (pid > 0) {
 		/* parent */
@@ -138,6 +155,9 @@ int net_gethostbyname_nonblock(const char *addr, GIOChannel *pipe,
 		}
 	}
 
+#ifdef __APPLE__
+  return 1;
+#else
 #ifndef WIN32
 	if (pid == 0)
 		_exit(99);
@@ -145,7 +165,36 @@ int net_gethostbyname_nonblock(const char *addr, GIOChannel *pipe,
 
 	/* we used blocking lookup */
 	return 0;
+#endif
 }
+
+#ifdef __APPLE__
+
+void* _net_gethostbyname_nonblock(void *ctx)
+{
+  struct _net_nonblock_params *params = ctx;
+  
+  __net_gethostbyname_nonblock(params->addr, params->pipe, params->reverse_lookup);
+  free(params);
+  
+  return NULL;
+}
+
+/* nonblocking gethostbyname(), ip (IPADDR) + error (int, 0 = not error) is
+ written to pipe when found PID of the resolver child is returned */
+int net_gethostbyname_nonblock(const char *addr, GIOChannel *pipe,
+                             int reverse_lookup)
+{
+  struct _net_nonblock_params *params = malloc(sizeof(struct _net_nonblock_params));
+  params->addr = addr;
+  params->pipe = pipe;
+  params->reverse_lookup = reverse_lookup;
+  
+  pthread_t thread;
+  pthread_create(&thread, NULL, _net_gethostbyname_nonblock, (void*)params);
+}
+
+#endif
 
 /* get the resolved IP address */
 int net_gethostbyname_return(GIOChannel *pipe, RESOLVED_IP_REC *rec)
@@ -201,7 +250,7 @@ void net_disconnect_nonblock(int pid)
 {
 	g_return_if_fail(pid > 0);
 
-#ifndef WIN32
+#if !defined(WIN32) || !defined(__APPLE__)
 	kill(pid, SIGKILL);
 #endif
 }
