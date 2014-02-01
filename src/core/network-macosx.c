@@ -23,6 +23,7 @@
 #include "module.h"
 #include "network.h"
 #include "misc.h"
+#include "servers.h"
 
 /* declare our escape into MacIrssi land */
 int irssibridge_present_trust_panel(SecTrustRef trust);
@@ -319,12 +320,18 @@ int irssi_ssl_handshake(GIOChannel *handle)
   return 0;
 }
 
-static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostname, const char *mycert, const char *mypkey, const char *cafile, const char *capath, gboolean verify)
+static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, int port, SERVER_REC *server)
 {
   GIOSSLChannel *channel;
   GIOChannel *gChannel;
   SSLContextRef contextRef;
   int fd;
+
+  const char *mycert = server->connrec->ssl_cert;
+  const char *mypkey = server->connrec->ssl_pkey;
+  const char *cafile = server->connrec->ssl_cafile;
+  const char *capath = server->connrec->ssl_capath;
+  gboolean verify = server->connrec->ssl_verify;
   
   if (!(fd = g_io_channel_unix_get_fd(handle))) {
     return NULL;
@@ -391,7 +398,6 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
   channel->giochan = handle;
   channel->context = contextRef;
   channel->verify = verify;
-  channel->hostname = hostname;
   
   gChannel = (GIOChannel*)channel;
   gChannel->funcs = &irssi_ssl_channel_funcs;
@@ -409,19 +415,15 @@ static GIOChannel *irssi_ssl_get_iochannel(GIOChannel *handle, const char *hostn
   return gChannel;
 }
 
-GIOChannel *net_connect_ip_ssl(IPADDR *ip, int port, const char* hostname, IPADDR *my_ip, const char *cert, const char *pkey, const char *cafile, const char *capath, gboolean verify)
+GIOChannel *net_connect_ip_ssl(IPADDR *ip, int port, IPADDR *my_ip, SERVER_REC *server)
 {
-  GIOChannel *handle, *ssl_handle;
-  
-  handle = net_connect_ip(ip, port, my_ip);
-  if (handle == NULL) {
-    return NULL;
-  }
-  
-  ssl_handle = irssi_ssl_get_iochannel(handle, hostname, cert, pkey, cafile, capath, verify);
-  if (ssl_handle == NULL) {
-    g_io_channel_unref(handle);
-    return NULL;
-  }
-  return ssl_handle;
+	GIOChannel *handle, *ssl_handle;
+
+	handle = net_connect_ip(ip, port, my_ip);
+	if (handle == NULL)
+		return NULL;
+	ssl_handle  = irssi_ssl_get_iochannel(handle, port, server);
+	if (ssl_handle == NULL)
+		g_io_channel_unref(handle);
+	return ssl_handle;
 }
