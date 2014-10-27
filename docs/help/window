@@ -1,0 +1,111 @@
+
+%9Syntax:%9
+
+WINDOW LOG %|on|off|toggle [<filename>]
+WINDOW LOGFILE %|<file>
+WINDOW NEW %|[HIDDEN|SPLIT]
+WINDOW CLOSE %|[<first> [<last>]]
+WINDOW REFNUM %|<number>
+WINDOW GOTO %|active|<number>|<name>
+WINDOW NEXT%|
+WINDOW LAST%|
+WINDOW PREVIOUS%|
+WINDOW LEVEL %|[<level>]
+WINDOW IMMORTAL %|on|off|toggle
+WINDOW SERVER %|[-sticky | -unsticky] <tag>
+WINDOW ITEM PREV%|
+WINDOW ITEM NEXT%|
+WINDOW ITEM GOTO %|<number>|<name>
+WINDOW ITEM MOVE %|<number>|<name>
+WINDOW NUMBER %|[-sticky] <number>
+WINDOW NAME %|<name>
+WINDOW HISTORY %|<name>
+WINDOW MOVE PREV%|
+WINDOW MOVE NEXT%|
+WINDOW MOVE FIRST%|
+WINDOW MOVE LAST%|
+WINDOW MOVE %|<number>|<direction>
+WINDOW LIST%|
+WINDOW THEME %|[-delete] [<name>]
+WINDOW GROW %|[<lines>]
+WINDOW SHRINK %|[<lines>]
+WINDOW SIZE %|<lines>
+WINDOW BALANCE%|
+WINDOW HIDE %|[<number>|<name>]
+WINDOW SHOW %|<number>|<name>
+WINDOW UP%|
+WINDOW DOWN%|
+WINDOW LEFT%|
+WINDOW RIGHT%|
+WINDOW STICK %|[<ref#>] [ON|OFF]
+WINDOW MOVE LEFT%|
+WINDOW MOVE RIGHT%|
+WINDOW MOVE UP%|
+WINDOW MOVE DOWN
+
+%9Parameters:%9
+
+    LOG:          Modifies the logging status.
+    LOGFILE:      Modifies the location to the log file.
+    NEW:          Creates a new window.
+    CLOSE:        Closes a window.
+    REFNUM:       Go to the window with the given number.
+    GOTO:         Go to the window with the given nickname, channel or number.
+    NEXT:         Go to the next window.
+    LAST:         Go to the last window.
+    PREVIOUS:     Go to the previous window.
+    LEVEL:        Modifies the text levels to display in the window.
+    IMMORTAL:     Modifies the window mortality status.
+    SERVER:       Set the active server of the window.
+    ITEM PREV:    Go to the previous item in the window.
+    ITEM NEXT:    Go to the next item in the window.
+    ITEM GOTO:    Go to the specified nickname, channel or window item number.
+    ITEM MOVE:    Move the active window item to another window.
+    NUMBER:       Move the active window to another position.
+    NAME:         Give the window a name.
+    HISTORY:      Clears the window history buffer.
+    MOVE PREV:    Move the window down.
+    MOVE NEXT:    Move the window up.
+    MOVE FIRST:   Move the window to the first position.
+    MOVE LAST:    Move the window to the last position.
+    MOVE:         Move the window.
+    LIST:         List all the windows.
+    THEME:        Applies a theme to the windows.
+    GROW:         Increase the window size when using split windows.
+    SHRINK:       Decrease the window size when using split windows.
+    SIZE:         Modify the window size when using split windows.
+    BALANCE:      Balance the window locations when using split windows.
+    HIDE:         Hide the window when using split windows.
+    SHOW:         Show the window when using split windows.
+    UP:           Go to the window above when using split windows.
+    DOWN:         Go to the window below when using split windows.
+    LEFT:         Go to the previous window.
+    RIGHT:        Go to the next window.
+    STICK:        Make the window sticky.
+    MOVE LEFT:    Move the window to the previous location.
+    MOVE RIGHT:   Move the window to the next location.
+    MOVE UP:      Move the window up when using split windows.
+    MOVE DOWN:    Move the window down when using split windows.
+
+   Add the required arguments for the given command.
+
+%9Description:%9
+
+    Manipulates the window layout and positioning attributes.
+
+%9Examples:%9
+
+    /WINDOW CLOSE
+    /WINDOW ITEM MOVE 10
+    /WINDOW GOTO 15
+    /WINDOW GOTO ACTIVE
+    /WINDOW GOTO mike
+    /WINDOW GOTO #irssi
+    /WINDOW NEW HIDDEN
+    /WINDOW LOG OFF
+    /WINDOW LOG ON ~/logs/debug.log
+    /WINDOW LEVEL -ALL +NOTICES
+    /WINDOW LOGFILE ~/logs/notices.log
+
+%9See also:%9 JOIN, LEVELS, LOG, QUERY
+
